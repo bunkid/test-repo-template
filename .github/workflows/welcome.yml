@@ -1,12 +1,38 @@
-name: Welcome New Contributors
+name: Add Contributor
 
-on: [issues, pull_request]
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
 jobs:
-  welcome:
+  add-contributor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/first-interaction@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: "Thanks for opening your first issue!"
-          pr-message: "Thanks for your first pull request!"
+          node-version: '20'
+
+      - name: Install all-contributors-cli
+        run: npm install -g all-contributors-cli
+
+      - name: Add contributor for issue
+        if: github.event_name == 'issues'
+        run: all-contributors add ${{ github.actor }} bug
+
+      - name: Add contributor for pull request
+        if: github.event_name == 'pull_request'
+        run: all-contributors add ${{ github.actor }} code
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "docs: add ${{ github.actor }} as contributor"
+          git push
